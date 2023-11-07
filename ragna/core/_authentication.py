@@ -38,6 +38,16 @@ class Authentication(abc.ABC):
         pass
 
 
+class AuthenticationStub(Authentication):
+    """Stub authentication that does not require any credentials."""
+
+    async def create_token(self, request: Request) -> str:
+        return ""
+
+    async def get_user(self, request: Request) -> str:
+        return "unauthenticated_user"
+
+
 class RagnaDemoAuthentication(Authentication):
     """Demo OAuth2 password authentication without requirements.
 

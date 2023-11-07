@@ -62,9 +62,7 @@ class ApiConfig(BaseSettings):
     origins: list[str] = ["http://127.0.0.1:31477"]
     database_url: str = "memory"
 
-    authentication: ImportString[
-        type[Authentication]
-    ] = "ragna.core.RagnaDemoAuthentication"  # type: ignore[assignment]
+    authentication: ImportString[type[Authentication]] = "ragna.core.AuthenticationStub"  # type: ignore[assignment]
 
 
 class UiConfig(BaseSettings):

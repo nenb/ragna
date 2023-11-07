@@ -15,6 +15,7 @@ __all__ = [
     "PdfDocumentHandler",
     "Rag",
     "RagnaDemoAuthentication",
+    "AuthenticationStub",
     "RagnaException",
     "Requirement",
     "Source",
@@ -54,7 +55,7 @@ from ._components import (
 
 # isort: split
 
-from ._authentication import Authentication, RagnaDemoAuthentication
+from ._authentication import Authentication, AuthenticationStub, RagnaDemoAuthentication
 
 # isort: split
 
