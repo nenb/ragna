@@ -29,11 +29,12 @@ RES = HERE / "resources"
 
 
 class App(param.Parameterized):
-    def __init__(self, *, url, api_url, origins):
+    def __init__(self, *, url, api_url, origins, auth):
         super().__init__()
         self.url = url
         self.api_url = api_url
         self.origins = origins
+        self.auth = auth
 
     def get_template(self):
         template = pn.template.FastListTemplate(
@@ -62,19 +63,24 @@ class App(param.Parameterized):
         return template
 
     def index_page(self):
-        if "auth_token" not in pn.state.cookies:
-            return pn.pane.HTML("""<script>window.location.href = '/auth';</script>""")
+        if "AuthenticationStub" in self.auth.__name__:
+            api_wrapper = ApiWrapper(api_url=self.api_url, auth_token="dummy_token")
+        else:
+            if "auth_token" not in pn.state.cookies:
+                return pn.pane.HTML(
+                    """<script>window.location.href = '/auth';</script>"""
+                )
 
-        try:
-            api_wrapper = ApiWrapper(
-                api_url=self.api_url, auth_token=pn.state.cookies["auth_token"]
-            )
-        except RagnaAuthTokenExpiredException:
-            # If the token has expired / is invalid, we redirect to the logout page.
-            # The logout page will delete the cookie and redirect to the auth page.
-            return pn.pane.HTML(
-                """<script>window.location.href = '/logout'; </script> """
-            )
+            try:
+                api_wrapper = ApiWrapper(
+                    api_url=self.api_url, auth_token=pn.state.cookies["auth_token"]
+                )
+            except RagnaAuthTokenExpiredException:
+                # If the token has expired / is invalid, we redirect to the logout page.
+                # The logout page will delete the cookie and redirect to the auth page.
+                return pn.pane.HTML(
+                    """<script>window.location.href = '/logout'; </script> """
+                )
 
         template = self.get_template()
         main_page = MainPage(api_wrapper=api_wrapper, template=template)
@@ -135,4 +141,5 @@ def app(config: Config) -> App:
         url=config.ui.url,
         api_url=config.api.url,
         origins=handle_localhost_origins(config.ui.origins),
+        auth=config.api.authentication,
     )
