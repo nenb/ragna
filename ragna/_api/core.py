@@ -89,6 +89,8 @@ def app(config: Config) -> FastAPI:
     database_url = config.api.database_url
     if database_url == "memory":
         database_url = "sqlite://"
+    elif database_url == "sqlite:///":
+        database_url = f"sqlite:///{config.local_cache_root}/ragna.db"
     make_session = database.get_sessionmaker(database_url)
 
     @contextlib.contextmanager

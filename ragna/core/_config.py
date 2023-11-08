@@ -42,14 +42,16 @@ class CoreConfig(BaseSettings):
     class Config(ConfigBase):
         env_prefix = "ragna_rag_"
 
-    queue_url: str = "memory"
+    queue_url: str = "file://"
 
     document: ImportString[type[Document]] = "ragna.core.LocalDocument"  # type: ignore[assignment]
     source_storages: list[ImportString[type[SourceStorage]]] = [
         "ragna.source_storages.RagnaDemoSourceStorage"  # type: ignore[list-item]
     ]
     assistants: list[ImportString[type[Assistant]]] = [
-        "ragna.assistants.RagnaDemoAssistant"  # type: ignore[list-item]
+        "ragna.assistants.RagnaDemoAssistant",
+        "ragna.assistants.Gpt4",
+        "ragna.assistants.Gpt35Turbo16k",  # type: ignore[list-item]
     ]
 
 
@@ -60,7 +62,7 @@ class ApiConfig(BaseSettings):
     url: str = "http://127.0.0.1:31476"
     # FIXME: this needs to be dynamic for the UI url
     origins: list[str] = ["http://127.0.0.1:31477"]
-    database_url: str = "memory"
+    database_url: str = "sqlite:///"
 
     authentication: ImportString[type[Authentication]] = "ragna.core.AuthenticationStub"  # type: ignore[assignment]
 

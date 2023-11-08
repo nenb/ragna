@@ -27,13 +27,18 @@ def parse_config(value: str) -> Config:
     try:
         config = Config.from_file(value)
     except RagnaException:
-        rich.print(f"The configuration file {value} does not exist.")
+        rich.print(
+            f"The configuration file {value} does not exist, "
+            "reverting to default configuration."
+        )
         if value == "./ragna.toml":
             rich.print(
                 "If you don't have a configuration file yet, "
                 "run [bold]ragna init[/bold] to generate one."
             )
-        raise typer.Exit(1)
+        config = Config()
+        config.__ragna_cli_config_path__ = value
+        return config
     except pydantic.ValidationError as validation:
         # FIXME: pretty formatting!
         for error in validation.errors():

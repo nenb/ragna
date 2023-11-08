@@ -76,9 +76,15 @@ class Queue:
         else:
             components = urlsplit(url)
             if components.scheme in {"", "file"}:
-                _huey = huey.FileHuey(
-                    path=components.path, use_thread_lock=True, **common_kwargs
-                )
+                if not components.path:
+                    path = self._config.local_cache_root / "queue"
+                    _huey = huey.FileHuey(
+                        path=path, use_thread_lock=True, **common_kwargs
+                    )
+                else:
+                    _huey = huey.FileHuey(
+                        path=components.path, use_thread_lock=True, **common_kwargs
+                    )
             elif components.scheme in {"redis", "rediss"}:
                 _huey = huey.RedisHuey(url=url, **common_kwargs)
                 try:
