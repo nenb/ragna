@@ -198,10 +198,35 @@ class Chat:
         sources = await self._enqueue(
             self.source_storage, "retrieve", self.documents, prompt.content
         )
+
+        # This is the key step - we move the LLM interaction from
+        # the consumer/queue to the producer!
+        #
+        # answer = Message(
+        #     content=await self._enqueue(
+        #         self.assistant, "answer", prompt.content, sources
+        #     ),
+        #     role=MessageRole.ASSISTANT,
+        #     sources=sources,
+        # )
+
+        streamed_content = []
+        fn = getattr(self.assistant, "answer")
+        async for streamed_response in fn(
+            self.assistant(self._rag.config),
+            prompt.content,
+            sources,
+            **self._unpacked_params[(self.assistant, "answer")],
+        ):
+            streamed_content.append(streamed_response)
+            # it's a bit too much work to get the streamed response to work
+            # with the rest of the code (ie UI) so we just print it out here
+            # as proof of concept for now
+            print("".join(streamed_content))
+        content = "".join(streamed_content)
+
         answer = Message(
-            content=await self._enqueue(
-                self.assistant, "answer", prompt.content, sources
-            ),
+            content=content,
             role=MessageRole.ASSISTANT,
             sources=sources,
         )

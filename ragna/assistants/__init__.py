@@ -6,12 +6,14 @@ __all__ = [
     "Mpt7bInstruct",
     "Mpt30bInstruct",
     "RagnaDemoAssistant",
+    "StreamGpt35Turbo16k",
 ]
 
 from ._anthropic import Claude, ClaudeInstant
 from ._demo import RagnaDemoAssistant
 from ._mosaicml import Mpt7bInstruct, Mpt30bInstruct
 from ._openai import Gpt4, Gpt35Turbo16k
+from .async_api import StreamGpt35Turbo16k
 
 # isort: split
 
