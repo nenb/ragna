@@ -7,6 +7,7 @@ from . import js
 from .central_view import CentralView
 from .left_sidebar import LeftSidebar
 from .modal_configuration import ModalConfiguration
+from .modal_select_files import ModalSelectFiles
 from .modal_welcome import ModalWelcome
 from .right_sidebar import RightSidebar
 
@@ -28,7 +29,7 @@ class MainPage(pn.viewable.Viewer, param.Parameterized):
 
         self.left_sidebar = LeftSidebar(api_wrapper=self.api_wrapper)
         self.left_sidebar.on_click_chat = self.on_click_chat
-        self.left_sidebar.on_click_new_chat = lambda event: self.open_modal()
+        self.left_sidebar.on_click_left_sidebar_button = lambda event: self.open_modal()
 
         self.right_sidebar = RightSidebar()
 
@@ -61,13 +62,25 @@ class MainPage(pn.viewable.Viewer, param.Parameterized):
 
     # Modal and callbacks
     def open_modal(self):
-        self.modal = ModalConfiguration(
-            api_wrapper=self.api_wrapper,
-            new_chat_ready_callback=self.open_new_chat,
-            cancel_button_callback=self.on_click_cancel_button,
-        )
+        def close_modal_callback(event):
+            self.left_sidebar.clicked_on_upload_files = False
+            self.template.close_modal()
 
-        self.template.modal.objects[0].objects = [self.modal]
+        if self.left_sidebar.clicked_on_upload_files:
+            self.modal = ModalSelectFiles(
+                api_wrapper=self.api_wrapper,
+                close_modal_callback=close_modal_callback,
+            )
+            self.template.modal.objects[0].objects = [self.modal]
+        else:
+            print("foo")
+            self.modal = ModalConfiguration(
+                api_wrapper=self.api_wrapper,
+                new_chat_ready_callback=self.open_new_chat,
+                cancel_button_callback=self.on_click_cancel_button,
+            )
+            self.template.modal.objects[0].objects = [self.modal]
+
         self.template.open_modal()
 
     def open_welcome_modal(self, event):
@@ -116,8 +129,8 @@ class MainPage(pn.viewable.Viewer, param.Parameterized):
             """I haven't found a better way to open the modal when the pages load,
             than simulating a click on the "New chat" button.
             - calling self.template.open_modal() doesn't work
-            - calling self.on_click_new_chat doesn't work either
-            - trying to schedule a call to on_click_new_chat with pn.state.schedule_task
+            - calling self.on_click_new_sidebar_button doesn't work either
+            - trying to schedule a call to on_click_new_sidebar_button with pn.state.schedule_task
                 could have worked but my tests were yielding an unstable result.
             """
 
