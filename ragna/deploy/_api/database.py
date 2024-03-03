@@ -98,6 +98,17 @@ def add_chat(session: Session, *, user: str, chat: schemas.Chat) -> None:
     session.commit()
 
 
+def get_names(session: Session, *, user: str) -> list[tuple[uuid.UUID, str]]:
+    return [
+        (chat.id, chat.name)
+        for chat in session.execute(
+            select(orm.Chat).where(orm.Chat.user_id == _get_user_id(session, user))
+        )
+        .scalars()
+        .all()
+    ]
+
+
 def _orm_to_schema_chat(chat: orm.Chat) -> schemas.Chat:
     documents = [
         schemas.Document(id=document.id, name=document.name)

@@ -40,3 +40,7 @@ class ModalWelcome(pn.viewable.Viewer):
             height=ui.WELCOME_MODAL_HEIGHT,
             sizing_mode="fixed",
         )
+
+
+if __name__ == "__main__":
+    ModalWelcome().servable()

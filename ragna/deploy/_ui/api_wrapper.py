@@ -57,10 +57,22 @@ class ApiWrapper(param.Parameterized):
     def update_auth_header(self):
         self.client.headers["Authorization"] = f"Bearer {self.auth_token}"
 
+    async def get_chat_names(self):
+        return (await self.client.get("/names")).raise_for_status().json()
+
     async def get_chats(self):
         json_data = (await self.client.get("/chats")).raise_for_status().json()
         for chat in json_data:
             chat["messages"] = [self.improve_message(msg) for msg in chat["messages"]]
+        return json_data
+
+    async def get_chat(self, chat_id):
+        json_data = (
+            (await self.client.get(f"/chats/{chat_id}")).raise_for_status().json()
+        )
+        json_data["messages"] = [
+            self.improve_message(msg) for msg in json_data["messages"]
+        ]
         return json_data
 
     async def answer(self, chat_id, prompt):
