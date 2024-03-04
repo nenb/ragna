@@ -87,7 +87,6 @@ LEFT_SIDEBAR_STYLESHEETS = """
 
 class LeftSidebar(pn.viewable.Viewer):
     chat_names = param.List(default=None)
-    current_chat_id = param.String(default=None)
 
     def __init__(
         self,
@@ -107,31 +106,50 @@ class LeftSidebar(pn.viewable.Viewer):
             update_current_chat_metadata_callback
         )
 
+        self.chat_name_select = pn.widgets.Select(
+            name="Select a Chat",
+            size=1,
+            options=[],
+            stylesheets=[CHAT_BUTTONS_STYLESHEET],
+        )
+
+        self.chat_name_select.param.watch(
+            self.chat_name_select_callback, ["value"], onlychanged=False
+        )
+
         pn.state.onload(self.get_chat_names)
 
     async def get_chat_names(self):
-        # Important: update chat_names BEFORE current_chat_id so chat_buttons called correctly
         chat_names = await self.api_wrapper.get_chat_names()
         if not chat_names:
             return
-        self.current_chat_id = chat_names[0][0]
         self.chat_names = chat_names
+
+    @pn.depends("chat_names", watch=True)
+    def chat_select_box(self):
+        if not self.chat_names:
+            return []
+        else:
+            self.chat_name_select.options = [name for _, name in self.chat_names]
 
     async def new_chat_ready_callback(self, new_chat_id):
         chat = await self.api_wrapper.get_chat(new_chat_id)
 
-        self.chat_names = self.chat_names + [(new_chat_id, chat["metadata"]["name"])]
-
         # this will trigger the update of the central view
         self.update_current_chat_callback(
-            chat["metadata"]["name"], chat["messages"], chat
+            {new_chat_id: chat["metadata"]["name"]}, chat["messages"], chat["metadata"]
         )
 
         # this will trigger the update of the right sidebar
         self.update_current_chat_metadata_callback(chat["metadata"])
 
         # this will trigger the update of the left sidebar itself
-        self.current_chat_id = new_chat_id
+        if not self.chat_names:
+            self.chat_names = [(new_chat_id, chat["metadata"]["name"])]
+        else:
+            self.chat_names = self.chat_names + [
+                (new_chat_id, chat["metadata"]["name"])
+            ]
 
         self.template.close_modal()
 
@@ -148,12 +166,11 @@ class LeftSidebar(pn.viewable.Viewer):
         self.template.modal.objects[0].objects = [modal]
         self.template.open_modal()
 
-    async def click_chat_name_callback(self, event):
-        # This is a hack to avoid the event being triggered twice in a row
-        if event.old > event.new:
+    async def chat_name_select_callback(self, event):
+        if not event.new:
             return
 
-        chat_name = event.obj.name
+        chat_name = event.new
 
         uuid = [uuid for uuid, name in self.chat_names if name == chat_name][0]
 
@@ -166,29 +183,6 @@ class LeftSidebar(pn.viewable.Viewer):
 
         # this will trigger the update of the right sidebar
         self.update_current_chat_metadata_callback(chat["metadata"])
-
-        # this will trigger the update of the left sidebar itself
-        self.current_chat_id = uuid
-
-    @pn.depends("chat_names", "current_chat_id")
-    def chat_buttons(self):
-        if not self.chat_names:
-            return []
-        else:
-            buttons = []
-            for uuid, name in self.chat_names[NUMBER_OF_CHAT_BUTTONS:]:
-                button = pn.widgets.Button(
-                    name=name,
-                    button_style="outline",
-                    stylesheets=[CHAT_BUTTONS_STYLESHEET],
-                )
-                button.on_click(self.click_chat_name_callback)
-
-                if uuid == self.current_chat_id:
-                    button.css_classes = ["selected"]
-                buttons.append(button)
-
-        return pn.FlexBox(*buttons)
 
     def header(self):
         return pn.pane.HTML(
@@ -210,7 +204,8 @@ class LeftSidebar(pn.viewable.Viewer):
         return pn.Column(
             self.header,
             self.new_chat_button,
-            self.chat_buttons,
+            pn.layout.Spacer(height=15),
+            self.chat_name_select,
             pn.layout.VSpacer(),
             pn.pane.HTML(f"version: {ragna_version}"),
             stylesheets=[LEFT_SIDEBAR_STYLESHEETS],
