@@ -110,12 +110,35 @@ class RightSidebar(pn.viewable.Viewer):
             location = source["location"]
             if location:
                 location = f": page(s) {location}"
-            source_infos.append(
-                (
-                    f"<b>{rank}. {source['document']['name']}</b> {location}",
-                    pn.pane.Markdown(source["content"], css_classes=["source-content"]),
+
+            if source["document"]["name"].endswith(".pdf"):
+                if "," in source["location"]:
+                    page_start = int(source["location"].split(",")[0])
+                elif "-" in source["location"]:
+                    page_start = int(source["location"].split("-")[0])
+                else:
+                    page_start = int(source["location"])
+                # TODO: Build from source metadata
+                html_link = f"dummy_link/my_pdf.pdf#page={page_start}"
+                source_infos.append(
+                    (
+                        f"<b>{rank}. {source['document']['name']}</b> {location}",
+                        pn.pane.HTML(
+                            f"<a href={html_link} target='_blank'><b>{source['document']['name']}</b> {location}</a>",
+                            css_classes=["source-content"],
+                        ),
+                    )
                 )
-            )
+            else:
+                source_infos.append(
+                    (
+                        f"<b>{rank}. {source['document']['name']}</b> {location}",
+                        pn.pane.Markdown(
+                            source["content"], css_classes=["source-content"]
+                        ),
+                    )
+                )
+
         self.content = [
             pn.pane.Markdown(
                 "This response was generated using the following data from the uploaded files: <br />",
