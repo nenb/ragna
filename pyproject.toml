@@ -36,7 +36,7 @@ dependencies = [
     "redis",
     "questionary",
     "rich",
-    "sqlalchemy>=2",
+    "sqlalchemy",
     "starlette",
     "tomlkit",
     "typer",
